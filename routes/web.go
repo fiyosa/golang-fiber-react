@@ -8,6 +8,6 @@ func Web(app *fiber.App) {
 			return c.Next()
 		}
 
-		return c.SendFile("./resources/view/index.html")
+		return c.SendFile("./resource/view/index.html")
 	})
 }

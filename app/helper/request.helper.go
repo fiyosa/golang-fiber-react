@@ -23,11 +23,11 @@ type queryResult struct {
 	SortedBy string
 }
 
-func Offset(page int, limit int) int {
+func (*Req) Offset(page int, limit int) int {
 	return (page - 1) * limit
 }
 
-func QueryStr(c *fiber.Ctx) queryResult {
+func (*Req) QueryStr(c *fiber.Ctx) queryResult {
 	getPage := strings.TrimSpace(c.Query("page", "1"))
 	getLimit := strings.TrimSpace(c.Query("limit", "10"))
 	getKeyword := strings.TrimSpace(c.Query("keyword", ""))

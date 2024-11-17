@@ -2,9 +2,11 @@ import { useState } from 'react'
 import { ImgReact } from '../../assets/img'
 import './home.css'
 import secret from '../../config/secret'
+import { useNavigate } from 'react-router-dom'
 
 function Home() {
   const [count, setCount] = useState(0)
+  const navigate = useNavigate()
   console.log(secret)
 
   return (
@@ -37,6 +39,13 @@ function Home() {
         <p>
           Edit <code>src/App.tsx</code> and save to test HMR
         </p>
+      </div>
+      <div className="card">
+        <button onClick={() => navigate('/login')}>Login</button>
+        <button style={{ margin: '0 5px' }} onClick={() => navigate('/user')}>
+          User
+        </button>
+        <button onClick={() => navigate('/unknown')}>404</button>
       </div>
       <p className="read-the-docs">Click on the Vite and React logos to learn more</p>
     </div>
