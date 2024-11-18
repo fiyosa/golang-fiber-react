@@ -1,15 +1,9 @@
-@HOST = http://localhost:4000/api
-@TOKEN = Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJkYXRhIjoiMSIsImV4cCI6MTcxNjYxODU2Nn0.N0WdxR4yZkI6IsuSz3uJnKLFCudahQm0-675MolcVsw
-# @TOKEN = Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJkYXRhIjoiMiIsImV4cCI6MTcxNjYyMDk1NH0.7wa_bJXnKWAQGoaQE-JtfjKuoOOx-8KCLrl4-s6I5v0
-
-###
-
-GET  {{HOST}}/auth/user
+GET  {{HOST}}/api/auth/user
 Authorization: {{TOKEN}}
 
 ###
 
-GET {{HOST}}/user
+GET {{HOST}}/api/user
         ?page=
         &limit=2
         &keyword=
@@ -19,7 +13,7 @@ Authorization: {{TOKEN}}
 
 ###
 
-GET {{HOST}}/user/kNj5VLv1lg
+GET {{HOST}}/api/user/kNj5VLv1lg
 Authorization: {{TOKEN}}
 
 ###

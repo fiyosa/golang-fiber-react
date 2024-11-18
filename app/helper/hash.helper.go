@@ -9,9 +9,11 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-type Hash struct{}
+var Hash hash
 
-func (*Hash) Create(data string) (string, error) {
+type hash struct{}
+
+func (*hash) Create(data string) (string, error) {
 	result, err := bcrypt.GenerateFromPassword([]byte(data), 10)
 	if err != nil {
 		return "", err
@@ -19,14 +21,14 @@ func (*Hash) Create(data string) (string, error) {
 	return string(result), nil
 }
 
-func (*Hash) Verify(check string, original string) bool {
+func (*hash) Verify(check string, original string) bool {
 	if err := bcrypt.CompareHashAndPassword([]byte(original), []byte(check)); err != nil {
 		return false
 	}
 	return true
 }
 
-func (*Hash) EncodeId(data int) (string, error) {
+func (*hash) EncodeId(data int) (string, error) {
 	h := setupHD()
 	encode, err := h.Encode([]int{data})
 	if err != nil {
@@ -35,7 +37,7 @@ func (*Hash) EncodeId(data int) (string, error) {
 	return encode, err
 }
 
-func (*Hash) DecodeId(data string) (int, error) {
+func (*hash) DecodeId(data string) (int, error) {
 	h := setupHD()
 	decode, err := h.DecodeWithError(data)
 	if err != nil {

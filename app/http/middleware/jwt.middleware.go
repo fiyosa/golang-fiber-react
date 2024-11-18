@@ -6,7 +6,6 @@ import (
 	"go-fiber-react/config"
 	"time"
 
-	"github.com/gofiber/fiber/v2"
 	"github.com/golang-jwt/jwt/v5"
 )
 
@@ -15,7 +14,8 @@ type Jwt struct{}
 func (*Jwt) Create(data string) (string, error) {
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
 		"data": data,
-		"exp":  time.Now().Add(time.Second * 60 * 60 * 24).Unix(),
+		// "exp":  time.Now().Add(time.Second * 60 * 60 * 24).Unix(),
+		"exp": time.Now().Add(time.Second * 60).Unix(),
 	})
 	tokenHash, err := token.SignedString([]byte(config.APP_SECRET))
 	if err != nil {
@@ -24,7 +24,7 @@ func (*Jwt) Create(data string) (string, error) {
 	return tokenHash, nil
 }
 
-func (*Jwt) Verify(c *fiber.Ctx, token string) (string, error) {
+func (*Jwt) Verify(token string) (string, error) {
 	getToken, _ := jwt.Parse(token, func(getToken *jwt.Token) (interface{}, error) {
 		if _, ok := getToken.Method.(*jwt.SigningMethodHMAC); !ok {
 			return nil, fmt.Errorf("unexpected method: %v", getToken.Header["alg"])

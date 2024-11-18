@@ -11,13 +11,13 @@ func Api(app *fiber.App) {
 	r := app.Group("/api")
 
 	Auth := middleware.Auth
-	UserController := &controller.UserController{}
-	AuthController := &controller.AuthController{}
 
-	r.Post("/auth/login", AuthController.Login)
-	r.Post("/auth/register", AuthController.Register)
+	r.Post("/auth/login", controller.AuthController.Login)
+	r.Post("/auth/register", controller.AuthController.Register)
+	r.Get("/auth/user", Auth(), controller.UserController.Auth)
 
-	r.Get("/user", Auth(), UserController.Index)
+	r.Get("/test/job", controller.TestController.Job)
+	r.Get("/test/event", controller.TestController.Event)
 
 	r.Use(func(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"message": "API not found"})

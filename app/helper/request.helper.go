@@ -6,8 +6,13 @@ import (
 	"github.com/gofiber/fiber/v2"
 )
 
-type Res struct{}
-type Req struct{}
+var (
+	Req req
+	Res res
+)
+
+type req struct{}
+type res struct{}
 
 type Paginate struct {
 	Page  int `json:"page" example:"0"`
@@ -23,11 +28,11 @@ type queryResult struct {
 	SortedBy string
 }
 
-func (*Req) Offset(page int, limit int) int {
+func (*req) Offset(page int, limit int) int {
 	return (page - 1) * limit
 }
 
-func (*Req) QueryStr(c *fiber.Ctx) queryResult {
+func (*req) QueryStr(c *fiber.Ctx) queryResult {
 	getPage := strings.TrimSpace(c.Query("page", "1"))
 	getLimit := strings.TrimSpace(c.Query("limit", "10"))
 	getKeyword := strings.TrimSpace(c.Query("keyword", ""))
@@ -61,7 +66,7 @@ func (*Req) QueryStr(c *fiber.Ctx) queryResult {
 	}
 }
 
-func (*Res) SendCustom(c *fiber.Ctx, data interface{}, statusCode ...int) error {
+func (*res) SendCustom(c *fiber.Ctx, data interface{}, statusCode ...int) error {
 	code := fiber.StatusOK // Default status code
 	if len(statusCode) > 0 {
 		code = statusCode[0]
@@ -69,20 +74,20 @@ func (*Res) SendCustom(c *fiber.Ctx, data interface{}, statusCode ...int) error 
 	return c.Status(code).JSON(data)
 }
 
-func (*Res) SendSuccess(c *fiber.Ctx, msg string) error {
+func (*res) SendSuccess(c *fiber.Ctx, msg string) error {
 	return c.Status(fiber.StatusOK).JSON(fiber.Map{
 		"message": msg,
 	})
 }
 
-func (*Res) SendData(c *fiber.Ctx, msg string, data interface{}) error {
+func (*res) SendData(c *fiber.Ctx, msg string, data interface{}) error {
 	return c.Status(fiber.StatusOK).JSON(fiber.Map{
 		"data":    data,
 		"message": msg,
 	})
 }
 
-func (*Res) SendDatas(c *fiber.Ctx, msg string, data interface{}, paginate Paginate) error {
+func (*res) SendDatas(c *fiber.Ctx, msg string, data interface{}, paginate Paginate) error {
 	return c.Status(fiber.StatusOK).JSON(fiber.Map{
 		"data":       data,
 		"pagination": paginate,
@@ -90,7 +95,7 @@ func (*Res) SendDatas(c *fiber.Ctx, msg string, data interface{}, paginate Pagin
 	})
 }
 
-func (*Res) SendErrorMsg(c *fiber.Ctx, msg string, statusCode ...int) error {
+func (*res) SendErrorMsg(c *fiber.Ctx, msg string, statusCode ...int) error {
 	code := fiber.StatusBadRequest // Default status code
 	if len(statusCode) > 0 {
 		code = statusCode[0]
@@ -100,7 +105,7 @@ func (*Res) SendErrorMsg(c *fiber.Ctx, msg string, statusCode ...int) error {
 	})
 }
 
-func (*Res) SendErrors(c *fiber.Ctx, msg string, err interface{}) error {
+func (*res) SendErrors(c *fiber.Ctx, msg string, err interface{}) error {
 	return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 		"errors":  err,
 		"message": msg,

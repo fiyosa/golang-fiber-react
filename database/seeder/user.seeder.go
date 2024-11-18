@@ -10,9 +10,8 @@ import (
 )
 
 func UserSeeder(g *gorm.DB) {
-	hash := helper.Hash{}
 
-	password, _ := hash.Create("Password")
+	password, _ := helper.Hash.Create("Password")
 	tx := g.Begin()
 
 	users := []*model.User{

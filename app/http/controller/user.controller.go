@@ -11,23 +11,20 @@ import (
 	"github.com/gofiber/fiber/v2"
 )
 
-type UserController struct{}
+var UserController userController
 
-func (*UserController) Auth(c *fiber.Ctx) error {
-	res := &helper.Res{}
-	l := &lang.L{}
-	ru := &repository.User{}
-	hash := &helper.Hash{}
+type userController struct{}
 
+func (*userController) Auth(c *fiber.Ctx) error {
 	user := &model.User{}
-	if err := ru.First(c, user); err != nil {
-		return err
+	if err := repository.User.Auth(c, user); err != nil {
+		return helper.Res.SendErrorMsg(c, err.Error())
 	}
 
-	id, _ := hash.EncodeId(user.Id)
-	return res.SendData(
+	id, _ := helper.Hash.EncodeId(user.Id)
+	return helper.Res.SendData(
 		c,
-		l.Convert(l.Get().RETRIEVED_SUCCESSFULLY, fiber.Map{"operator": l.Get().USER}),
+		lang.L.Convert(lang.L.Get().RETRIEVED_SUCCESSFULLY, fiber.Map{"operator": lang.L.Get().USER}),
 		&request.UserShowRes{
 			Id:        id,
 			Username:  user.Username,
@@ -38,12 +35,9 @@ func (*UserController) Auth(c *fiber.Ctx) error {
 	)
 }
 
-func (*UserController) Index(c *fiber.Ctx) error {
-	res := &helper.Res{}
-	l := &lang.L{}
-
+func (*userController) Index(c *fiber.Ctx) error {
 	config.Log("this is log")
 	config.Logf("this is log: %v", "format")
 
-	return res.SendSuccess(c, l.Convert(l.Get().SAVED_SUCCESSFULLY, fiber.Map{"operator": l.Get().USER}))
+	return helper.Res.SendSuccess(c, lang.L.Convert(lang.L.Get().SAVED_SUCCESSFULLY, fiber.Map{"operator": lang.L.Get().USER}))
 }

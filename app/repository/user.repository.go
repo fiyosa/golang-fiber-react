@@ -1,7 +1,7 @@
 package repository
 
 import (
-	"go-fiber-react/app/helper"
+	"errors"
 	"go-fiber-react/app/model"
 	"go-fiber-react/config"
 	"go-fiber-react/lang"
@@ -9,41 +9,29 @@ import (
 	"github.com/gofiber/fiber/v2"
 )
 
-type User struct{}
+var User user
 
-func (*User) Auth(c *fiber.Ctx, u *model.User) error {
-	res := &helper.Res{}
-	l := &lang.L{}
+type user struct{}
+
+func (*user) Auth(c *fiber.Ctx, u *model.User) error {
 	user := c.Locals("user")
-
-	if user == "" {
-		return res.SendErrorMsg(c, l.Convert(l.Get().UNAUTHORIZED_ACCESS))
+	if user == nil {
+		return errors.New(lang.L.Convert(lang.L.Get().UNAUTHORIZED_ACCESS))
 	}
+
 	userObj, ok := user.(model.User)
 	if !ok {
-		return res.SendErrorMsg(c, l.Convert(l.Get().UNAUTHORIZED_ACCESS))
-	}
-	*u = userObj
-	return nil
-}
-
-func (*User) First(c *fiber.Ctx, u *model.User) error {
-	res := &helper.Res{}
-	l := &lang.L{}
-
-	user := c.Locals("user")
-	if user == "" {
-		return res.SendErrorMsg(c, l.Convert(l.Get().UNAUTHORIZED_ACCESS))
-	}
-	userObj, ok := user.(model.User)
-	if !ok {
-		return res.SendErrorMsg(c, l.Convert(l.Get().UNAUTHORIZED_ACCESS))
+		return errors.New(lang.L.Convert(lang.L.Get().UNAUTHORIZED_ACCESS))
 	}
 
 	*u = userObj
 	return nil
 }
 
-func (*User) Create(u *model.User) error {
+func (*user) First(c *fiber.Ctx, u *model.User) error {
+	return nil
+}
+
+func (*user) Create(u *model.User) error {
 	return config.G.Create(&u).Error
 }

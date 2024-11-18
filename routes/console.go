@@ -41,5 +41,4 @@ func Console() {
 	if status {
 		os.Exit(0)
 	}
-
 }

@@ -16,8 +16,8 @@
   },
   "rest-client.environmentVariables": {
     "local": {
-      "HOST": "http://localhost:3000",
-      "TOKEN": "Brearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJkYXRhIjoxLCJpYXQiOjE3MjI3NjM2MTksImV4cCI6MTcyMjg1MDAxOX0.PEgQ5mGQRbu-WXHy7_a2IcVNeaMWGPpsfbSpuPUItpM"
+      "HOST": "http://localhost:4000",
+      "TOKEN": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJkYXRhIjoiMiIsImV4cCI6MTczMTg1Njg0N30.ss9NUNem-zfsteDkMe9cy1jkY4q39Np_JAbctADXAIg"
     }
   }
 }

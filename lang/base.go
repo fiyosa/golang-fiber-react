@@ -6,9 +6,11 @@ import (
 	"strings"
 )
 
-type L struct{}
+var L l
 
-func (*L) Convert(msg string, args ...map[string]any) string {
+type l struct{}
+
+func (*l) Convert(msg string, args ...map[string]any) string {
 	if len(args) == 0 || args[0] == nil {
 		return msg
 	}
@@ -20,7 +22,7 @@ func (*L) Convert(msg string, args ...map[string]any) string {
 	return newMsg
 }
 
-func (*L) Get() ILang {
+func (*l) Get() ILang {
 	return locale[config.APP_LOCALE]
 }
 

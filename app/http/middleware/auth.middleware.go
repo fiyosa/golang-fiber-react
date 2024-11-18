@@ -25,20 +25,15 @@ func Auth(permission ...string) fiber.Handler {
 }
 
 func authorization(c *fiber.Ctx, user *model.User, permissions ...string) error {
-	l := &lang.L{}
-	res := &helper.Res{}
-	rr := &repository.Role{}
-	rp := &repository.Permission{}
-
 	if len(permissions) == 0 {
 		return nil
 	}
 
 	roles := []string{}
-	rr.GetRoles(user.Id, &roles)
+	repository.Role.GetMany(user.Id, &roles)
 
 	getPermissions := []string{}
-	rp.GetPermissions(roles, &getPermissions)
+	repository.Permission.GetPermissions(roles, &getPermissions)
 
 	check := false
 	for _, v := range getPermissions {
@@ -48,7 +43,7 @@ func authorization(c *fiber.Ctx, user *model.User, permissions ...string) error 
 	}
 
 	if !check {
-		return res.SendErrorMsg(c, l.Convert(l.Get().PERMISSION_FAILED))
+		return helper.Res.SendErrorMsg(c, lang.L.Convert(lang.L.Get().PERMISSION_FAILED))
 	}
 
 	return nil
@@ -56,31 +51,30 @@ func authorization(c *fiber.Ctx, user *model.User, permissions ...string) error 
 
 func authentication(c *fiber.Ctx, user *model.User) error {
 	getToken := c.Get("Authorization")
-	res := &helper.Res{}
 	jwt := &Jwt{}
-	l := &lang.L{}
 
 	if getToken == "" {
-		return res.SendErrorMsg(c, l.Convert(l.Get().UNAUTHORIZED_ACCESS))
+		return helper.Res.SendErrorMsg(c, lang.L.Convert(lang.L.Get().UNAUTHORIZED_ACCESS))
 	}
 
 	tokenParts := strings.Split(getToken, " ")
 	if len(tokenParts) != 2 || tokenParts[0] != "Bearer" {
-		return res.SendErrorMsg(c, l.Convert(l.Get().UNAUTHORIZED_ACCESS))
+		return helper.Res.SendErrorMsg(c, lang.L.Convert(lang.L.Get().UNAUTHORIZED_ACCESS))
 	}
 
 	token := tokenParts[1]
-	if _, err := jwt.Verify(c, token); err != nil {
-		return res.SendErrorMsg(c, l.Convert(l.Get().UNAUTHORIZED_ACCESS))
+	if _, err := jwt.Verify(token); err != nil {
+		return helper.Res.SendErrorMsg(c, lang.L.Convert(lang.L.Get().UNAUTHORIZED_ACCESS))
 	}
 
 	auth := &model.Auth{}
 	config.G.Preload("User").Where(&model.Auth{Token: token}).First(&auth)
 	if auth.Id == 0 {
-		return res.SendErrorMsg(c, l.Convert(l.Get().UNAUTHORIZED_ACCESS))
+		return helper.Res.SendErrorMsg(c, lang.L.Convert(lang.L.Get().UNAUTHORIZED_ACCESS))
 	}
 
 	*user = auth.User
+	config.Log(auth)
 	c.Locals("user", auth.User)
 	return nil
 }

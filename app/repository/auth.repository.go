@@ -5,8 +5,10 @@ import (
 	"go-fiber-react/config"
 )
 
-type Auth struct{}
+var Auth auth
 
-func (*Auth) Create(u *model.Auth) error {
+type auth struct{}
+
+func (*auth) Create(u *model.Auth) error {
 	return config.G.Create(&u).Error
 }

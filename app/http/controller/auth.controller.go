@@ -12,32 +12,30 @@ import (
 	"github.com/gofiber/fiber/v2"
 )
 
-type AuthController struct{}
+var AuthController authController
 
-func (*AuthController) Login(c *fiber.Ctx) error {
-	res := &helper.Res{}
-	l := &lang.L{}
-	hash := &helper.Hash{}
+type authController struct{}
+
+func (*authController) Login(c *fiber.Ctx) error {
 	jwt := &middleware.Jwt{}
-	ra := &repository.Auth{}
 
 	validated := &request.LoginAuthReq{}
-	if err := helper.Validate(c, validated); err != nil {
+	if err, isOk := helper.Validate(c, validated); !isOk {
 		return err
 	}
 
 	user := &model.User{}
 	if err := config.G.Where(&model.User{Username: validated.Username}).First(&user).Error; err != nil {
-		return res.SendErrorMsg(c, l.Convert(l.Get().AUTH_FAILED))
+		return helper.Res.SendErrorMsg(c, lang.L.Convert(lang.L.Get().AUTH_FAILED))
 	}
 
-	if !hash.Verify(validated.Password, user.Password) {
-		res.SendErrorMsg(c, l.Convert(l.Get().AUTH_FAILED))
+	if !helper.Hash.Verify(validated.Password, user.Password) {
+		helper.Res.SendErrorMsg(c, lang.L.Convert(lang.L.Get().AUTH_FAILED))
 	}
 
 	token, err := jwt.Create(helper.Int2Str(user.Id))
 	if err != nil {
-		return res.SendErrorMsg(c, err.Error(), fiber.StatusInternalServerError)
+		return helper.Res.SendErrorMsg(c, err.Error(), fiber.StatusInternalServerError)
 	}
 
 	auth := &model.Auth{
@@ -45,43 +43,38 @@ func (*AuthController) Login(c *fiber.Ctx) error {
 		Token:  token,
 	}
 
-	if err := ra.Create(auth); err != nil {
-		return res.SendErrorMsg(c, err.Error(), fiber.StatusInternalServerError)
+	if err := repository.Auth.Create(auth); err != nil {
+		return helper.Res.SendErrorMsg(c, err.Error(), fiber.StatusInternalServerError)
 	}
 
-	return res.SendCustom(c, request.LoginAuthRes{
+	return helper.Res.SendCustom(c, request.LoginAuthRes{
 		Token: token,
 	}, fiber.StatusOK)
 }
 
-func (*AuthController) Register(c *fiber.Ctx) error {
-	res := &helper.Res{}
-	l := &lang.L{}
-	hash := &helper.Hash{}
-	ru := &repository.User{}
-
+func (*authController) Register(c *fiber.Ctx) error {
 	validated := &request.RegisterReq{}
-	if err := helper.Validate(c, validated); err != nil {
+	if err, isOk := helper.Validate(c, validated); !isOk {
 		return err
 	}
 
 	user := &model.User{}
 	config.G.Where(&model.User{Username: validated.Username}).First(&user)
 	if user.Id != 0 {
-		return res.SendErrorMsg(c, l.Convert(l.Get().ALREADY_EXIST, fiber.Map{"operator": l.Get().USER}))
+		return helper.Res.SendErrorMsg(c, lang.L.Convert(lang.L.Get().ALREADY_EXIST, fiber.Map{"operator": lang.L.Get().USER}))
 	}
 
-	newPassword, err := hash.Create(validated.Password)
+	newPassword, err := helper.Hash.Create(validated.Password)
 	if err != nil {
-		return res.SendErrorMsg(c, err.Error())
+		return helper.Res.SendErrorMsg(c, err.Error())
 	}
 
 	user.Username = validated.Username
 	user.Name = validated.Name
 	user.Password = newPassword
-	ru.Create(user)
+	repository.User.Create(user)
 
-	id, _ := hash.EncodeId(user.Id)
+	id, _ := helper.Hash.EncodeId(user.Id)
 	result := request.RegisterRes{
 		Data: request.UserShowRes{
 			Id:        id,
@@ -90,8 +83,8 @@ func (*AuthController) Register(c *fiber.Ctx) error {
 			CreatedAt: helper.Time2Str(user.CreatedAt),
 			UpdatedAt: helper.Time2Str(user.UpdatedAt),
 		},
-		Message: l.Convert(l.Get().SAVED_SUCCESSFULLY, fiber.Map{"operator": l.Get().USER}),
+		Message: lang.L.Convert(lang.L.Get().SAVED_SUCCESSFULLY, fiber.Map{"operator": lang.L.Get().USER}),
 	}
 
-	return res.SendCustom(c, result, fiber.StatusOK)
+	return helper.Res.SendCustom(c, result, fiber.StatusOK)
 }
