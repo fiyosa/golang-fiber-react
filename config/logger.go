@@ -8,7 +8,7 @@ import (
 	"github.com/gofiber/fiber/v2/log"
 )
 
-const out = "console" // "file" or "console"
+const out = "file" // "file" or "console"
 
 // example:
 // config.log("info")

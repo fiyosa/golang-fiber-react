@@ -51,7 +51,6 @@ func authorization(c *fiber.Ctx, user *model.User, permissions ...string) error 
 
 func authentication(c *fiber.Ctx, user *model.User) error {
 	getToken := c.Get("Authorization")
-	jwt := &Jwt{}
 
 	if getToken == "" {
 		return helper.Res.SendErrorMsg(c, lang.L.Convert(lang.L.Get().UNAUTHORIZED_ACCESS))
@@ -63,7 +62,7 @@ func authentication(c *fiber.Ctx, user *model.User) error {
 	}
 
 	token := tokenParts[1]
-	if _, err := jwt.Verify(token); err != nil {
+	if _, err := Jwt.Verify(token); err != nil {
 		return helper.Res.SendErrorMsg(c, lang.L.Convert(lang.L.Get().UNAUTHORIZED_ACCESS))
 	}
 
@@ -74,7 +73,6 @@ func authentication(c *fiber.Ctx, user *model.User) error {
 	}
 
 	*user = auth.User
-	config.Log(auth)
 	c.Locals("user", auth.User)
 	return nil
 }

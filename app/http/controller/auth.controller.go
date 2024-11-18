@@ -17,8 +17,6 @@ var AuthController authController
 type authController struct{}
 
 func (*authController) Login(c *fiber.Ctx) error {
-	jwt := &middleware.Jwt{}
-
 	validated := &request.LoginAuthReq{}
 	if err, isOk := helper.Validate(c, validated); !isOk {
 		return err
@@ -30,10 +28,15 @@ func (*authController) Login(c *fiber.Ctx) error {
 	}
 
 	if !helper.Hash.Verify(validated.Password, user.Password) {
-		helper.Res.SendErrorMsg(c, lang.L.Convert(lang.L.Get().AUTH_FAILED))
+		return helper.Res.SendErrorMsg(c, lang.L.Convert(lang.L.Get().AUTH_FAILED))
 	}
 
-	token, err := jwt.Create(helper.Int2Str(user.Id))
+	hashId, err := helper.Hash.EncodeId(user.Id)
+	if err != nil {
+		return helper.Res.SendErrorMsg(c, err.Error())
+	}
+
+	token, err := middleware.Jwt.Create(hashId)
 	if err != nil {
 		return helper.Res.SendErrorMsg(c, err.Error(), fiber.StatusInternalServerError)
 	}
