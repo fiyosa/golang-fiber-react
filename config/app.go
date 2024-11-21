@@ -7,7 +7,13 @@ import (
 )
 
 func App() *fiber.App {
-	app := fiber.New()
+	app := fiber.New(fiber.Config{
+		ErrorHandler: func(c *fiber.Ctx, err error) error {
+			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+				"message": err.Error(),
+			})
+		},
+	})
 
 	app.Use(logger.New())
 

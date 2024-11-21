@@ -1,9 +1,11 @@
 package helper
 
 import (
+	"errors"
 	"strings"
 
 	"github.com/gofiber/fiber/v2"
+	"gorm.io/gorm"
 )
 
 var (
@@ -15,9 +17,9 @@ type req struct{}
 type res struct{}
 
 type Paginate struct {
-	Page  int `json:"page" example:"0"`
-	Limit int `json:"limit" example:"0"`
-	Total int `json:"total" example:"0"`
+	Page  int   `json:"page" example:"0"`
+	Limit int   `json:"limit" example:"0"`
+	Total int64 `json:"total" example:"0"`
 }
 
 type queryResult struct {
@@ -110,4 +112,43 @@ func (*res) SendErrors(c *fiber.Ctx, msg string, err interface{}) error {
 		"errors":  err,
 		"message": msg,
 	})
+}
+
+func (*res) SendException(c *fiber.Ctx, err error) error {
+	if isErrGorm := handleGormError(err); isErrGorm != "" {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"message": isErrGorm})
+	}
+
+	return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"message": err.Error()})
+}
+
+func handleGormError(err error) string {
+	switch {
+	case errors.Is(err, gorm.ErrRecordNotFound):
+		return "Record not found"
+	case errors.Is(err, gorm.ErrInvalidTransaction):
+		return "Invalid transaction"
+	case errors.Is(err, gorm.ErrNotImplemented):
+		return "Feature not implemented"
+	case errors.Is(err, gorm.ErrMissingWhereClause):
+		return "Missing WHERE clause"
+	case errors.Is(err, gorm.ErrUnsupportedDriver):
+		return "Unsupported driver"
+	case errors.Is(err, gorm.ErrRegistered):
+		return "Driver already registered"
+	case errors.Is(err, gorm.ErrInvalidField):
+		return "Invalid field"
+
+	case strings.Contains(err.Error(), "duplicate key value violates unique constraint"):
+		return "Duplicate key error: unique constraint violated"
+	case strings.Contains(err.Error(), "violates foreign key constraint"):
+		return "Foreign key constraint violated"
+	case strings.Contains(err.Error(), "cannot insert null"):
+		return "Cannot insert NULL value into required field"
+	case strings.Contains(err.Error(), "syntax error"):
+		return "SQL syntax error detected"
+
+	default:
+		return ""
+	}
 }

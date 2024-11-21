@@ -11,68 +11,81 @@ import (
 	"github.com/gofiber/fiber/v2"
 )
 
+var (
+	getPermissions *[]string
+)
+
 func Auth(permission ...string) fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		user := &model.User{}
-		if err := authentication(c, user); err != nil {
+		if err, isOk := authentication(c, user); !isOk {
 			return err
 		}
-		if err := authorization(c, user, permission...); err != nil {
+		if err, isOk := authorization(c, permission...); !isOk {
 			return err
 		}
 		return c.Next()
 	}
 }
 
-func authorization(c *fiber.Ctx, user *model.User, permissions ...string) error {
-	if len(permissions) == 0 {
-		return nil
+func authentication(c *fiber.Ctx, user *model.User) (error, bool) {
+	getToken := c.Get("Authorization")
+
+	if getToken == "" {
+		return helper.Res.SendErrorMsg(c, lang.L.Convert(lang.L.Get().UNAUTHORIZED_ACCESS)), false
 	}
 
-	roles := []string{}
-	repository.Role.GetMany(user.Id, &roles)
+	tokenParts := strings.Split(getToken, " ")
+	if len(tokenParts) != 2 || tokenParts[0] != "Bearer" {
+		return helper.Res.SendErrorMsg(c, lang.L.Convert(lang.L.Get().UNAUTHORIZED_ACCESS)), false
+	}
 
-	getPermissions := []string{}
-	repository.Permission.GetPermissions(roles, &getPermissions)
+	token := tokenParts[1]
+	if _, err := Jwt.Verify(token); err != nil {
+		return helper.Res.SendErrorMsg(c, lang.L.Convert(lang.L.Get().UNAUTHORIZED_ACCESS)), false
+	}
+
+	auth := &model.Auth{}
+	if err := config.G.Preload("User").Where(&model.Auth{Token: token}).First(&auth).Error; err != nil {
+		return helper.Res.SendErrorMsg(c, err.Error()), false
+	}
+	if auth.Id == 0 {
+		return helper.Res.SendErrorMsg(c, lang.L.Convert(lang.L.Get().UNAUTHORIZED_ACCESS)), false
+	}
+
+	roles := &[]string{}
+	if err := repository.Role.GetMany(auth.UserId, roles); err != nil {
+		return helper.Res.SendErrorMsg(c, err.Error()), false
+	}
+
+	permissions := &[]string{}
+	if err := repository.Permission.GetManyByUserId(auth.UserId, permissions); err != nil {
+		return helper.Res.SendErrorMsg(c, err.Error()), false
+	}
+	getPermissions = permissions
+
+	*user = auth.User
+	c.Locals("user", auth.User)
+	c.Locals("roles", *roles)
+	c.Locals("permissions", *permissions)
+	return nil, true
+}
+
+func authorization(c *fiber.Ctx, permission ...string) (error, bool) {
+	if len(permission) == 0 {
+		return nil, true
+	}
 
 	check := false
-	for _, v := range getPermissions {
-		if v == permissions[0] {
+	for _, v := range *getPermissions {
+		if v == permission[0] {
 			check = true
 		}
 	}
 
 	if !check {
-		return helper.Res.SendErrorMsg(c, lang.L.Convert(lang.L.Get().PERMISSION_FAILED))
+		return helper.Res.SendErrorMsg(c, lang.L.Convert(lang.L.Get().PERMISSION_FAILED)), false
 	}
 
-	return nil
-}
-
-func authentication(c *fiber.Ctx, user *model.User) error {
-	getToken := c.Get("Authorization")
-
-	if getToken == "" {
-		return helper.Res.SendErrorMsg(c, lang.L.Convert(lang.L.Get().UNAUTHORIZED_ACCESS))
-	}
-
-	tokenParts := strings.Split(getToken, " ")
-	if len(tokenParts) != 2 || tokenParts[0] != "Bearer" {
-		return helper.Res.SendErrorMsg(c, lang.L.Convert(lang.L.Get().UNAUTHORIZED_ACCESS))
-	}
-
-	token := tokenParts[1]
-	if _, err := Jwt.Verify(token); err != nil {
-		return helper.Res.SendErrorMsg(c, lang.L.Convert(lang.L.Get().UNAUTHORIZED_ACCESS))
-	}
-
-	auth := &model.Auth{}
-	config.G.Preload("User").Where(&model.Auth{Token: token}).First(&auth)
-	if auth.Id == 0 {
-		return helper.Res.SendErrorMsg(c, lang.L.Convert(lang.L.Get().UNAUTHORIZED_ACCESS))
-	}
-
-	*user = auth.User
-	c.Locals("user", auth.User)
-	return nil
+	return nil, true
 }

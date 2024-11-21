@@ -5,7 +5,7 @@ Authorization: {{TOKEN}}
 
 GET {{HOST}}/api/user
         ?page=
-        &limit=2
+        &limit=10
         &keyword=
         &orderBy=id
         &sortedBy=asc
@@ -13,7 +13,15 @@ Authorization: {{TOKEN}}
 
 ###
 
-GET {{HOST}}/api/user/kNj5VLv1lg
+GET {{HOST}}/api/user/gp8yQ0v2xR
 Authorization: {{TOKEN}}
+
+###
+
+PUT  {{HOST}}/api/user/ZeRAdzy4jJ
+Authorization: {{TOKEN}}
+Content-Type: application/x-www-form-urlencoded
+
+name=test1
 
 ###

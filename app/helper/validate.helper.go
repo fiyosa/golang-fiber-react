@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"go-fiber-react/config"
 	"go-fiber-react/lang"
+	"strings"
 
 	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber/v2"
@@ -23,20 +24,18 @@ func Validate(c *fiber.Ctx, input interface{}) (err error, isOk bool) {
 
 func generateError(c *fiber.Ctx, err error) error {
 	newErrors := map[string]string{}
-	msg := ""
+	msg := "Invalid data"
 
 	switch v := err.(type) {
 	case *json.UnmarshalTypeError:
-		newMsg := "Json binding error: " + v.Field + " type error"
-		newErrors[v.Field] = newMsg
-		msg = "Invalid data"
+		field := strings.ToLower(v.Field)
+		newErrors[field] = "Json binding error: " + field + " type error"
 
 	case validator.ValidationErrors:
 		for _, e := range v {
-			newMsg := e.Translate(config.Translator)
-			newErrors[e.Field()] = newMsg
+			field := strings.ToLower(e.Field())
+			newErrors[field] = strings.ToLower(e.Translate(config.Translator))
 		}
-		msg = "Invalid data"
 
 	default:
 		if v != nil {

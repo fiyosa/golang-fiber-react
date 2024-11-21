@@ -5,16 +5,16 @@ GET {{HOST}}/api/auth/secret
 POST {{HOST}}/api/auth/register
 Content-Type: application/x-www-form-urlencoded
 
-username=subordinate
+username=subordinate1
 &password=Password
-&name=test
+&name=Subordinate 1
 
 ### 
 
 POST {{HOST}}/api/auth/login
 Content-Type: application/x-www-form-urlencoded
 
-username=user
+username=admin
 &password=Password
 
 ### 

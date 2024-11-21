@@ -9,11 +9,11 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 )
 
-var Jwt JwtConfig
+var Jwt JwtMiddleware
 
-type JwtConfig struct{}
+type JwtMiddleware struct{}
 
-func (*JwtConfig) Create(data string) (string, error) {
+func (*JwtMiddleware) Create(data string) (string, error) {
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
 		"data": data,
 		"exp":  time.Now().Add(time.Second * 60 * 60 * 24).Unix(),
@@ -26,7 +26,7 @@ func (*JwtConfig) Create(data string) (string, error) {
 	return tokenHash, nil
 }
 
-func (*JwtConfig) Verify(token string) (string, error) {
+func (*JwtMiddleware) Verify(token string) (string, error) {
 	getToken, _ := jwt.Parse(token, func(getToken *jwt.Token) (interface{}, error) {
 		if _, ok := getToken.Method.(*jwt.SigningMethodHMAC); !ok {
 			return nil, fmt.Errorf("unexpected method: %v", getToken.Header["alg"])

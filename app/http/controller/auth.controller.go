@@ -3,21 +3,23 @@ package controller
 import (
 	"go-fiber-react/app/helper"
 	"go-fiber-react/app/http/middleware"
+	"go-fiber-react/app/http/request/request_auth"
+	"go-fiber-react/app/http/resource/resource_auth"
+	"go-fiber-react/app/http/resource/resource_user"
 	"go-fiber-react/app/model"
 	"go-fiber-react/app/repository"
-	"go-fiber-react/app/request"
 	"go-fiber-react/config"
 	"go-fiber-react/lang"
 
 	"github.com/gofiber/fiber/v2"
 )
 
-var AuthController authController
+var Auth authController
 
 type authController struct{}
 
 func (*authController) Login(c *fiber.Ctx) error {
-	validated := &request.LoginAuthReq{}
+	validated := &request_auth.Login{}
 	if err, isOk := helper.Validate(c, validated); !isOk {
 		return err
 	}
@@ -33,12 +35,12 @@ func (*authController) Login(c *fiber.Ctx) error {
 
 	hashId, err := helper.Hash.EncodeId(user.Id)
 	if err != nil {
-		return helper.Res.SendErrorMsg(c, err.Error())
+		return helper.Res.SendException(c, err)
 	}
 
 	token, err := middleware.Jwt.Create(hashId)
 	if err != nil {
-		return helper.Res.SendErrorMsg(c, err.Error(), fiber.StatusInternalServerError)
+		return helper.Res.SendException(c, err)
 	}
 
 	auth := &model.Auth{
@@ -50,16 +52,18 @@ func (*authController) Login(c *fiber.Ctx) error {
 		return helper.Res.SendErrorMsg(c, err.Error(), fiber.StatusInternalServerError)
 	}
 
-	return helper.Res.SendCustom(c, request.LoginAuthRes{
+	return helper.Res.SendCustom(c, resource_auth.Login{
 		Token: token,
 	}, fiber.StatusOK)
 }
 
 func (*authController) Register(c *fiber.Ctx) error {
-	validated := &request.RegisterReq{}
+	validated := &request_auth.Register{}
 	if err, isOk := helper.Validate(c, validated); !isOk {
 		return err
 	}
+
+	tx := config.G.Begin()
 
 	user := &model.User{}
 	config.G.Where(&model.User{Username: validated.Username}).First(&user)
@@ -69,17 +73,37 @@ func (*authController) Register(c *fiber.Ctx) error {
 
 	newPassword, err := helper.Hash.Create(validated.Password)
 	if err != nil {
-		return helper.Res.SendErrorMsg(c, err.Error())
+		return helper.Res.SendException(c, err)
 	}
 
 	user.Username = validated.Username
 	user.Name = validated.Name
 	user.Password = newPassword
-	repository.User.Create(user)
+	if err := tx.Create(user).Error; err != nil {
+		tx.Rollback()
+		return helper.Res.SendException(c, err)
+	}
+
+	roleUser := &model.Role{}
+	if err := tx.Model(&model.Role{}).Where("name = ?", "user").First(roleUser).Error; err != nil {
+		tx.Rollback()
+		return helper.Res.SendException(c, err)
+	}
+
+	uhr := &model.UserHasRole{
+		UserId: user.Id,
+		RoleId: roleUser.Id,
+	}
+	if err := tx.Create(uhr).Error; err != nil {
+		tx.Rollback()
+		return helper.Res.SendException(c, err)
+	}
+
+	tx.Commit()
 
 	id, _ := helper.Hash.EncodeId(user.Id)
-	result := request.RegisterRes{
-		Data: request.UserShowRes{
+	result := resource_auth.Register{
+		Data: resource_user.Show{
 			Id:        id,
 			Username:  user.Username,
 			Name:      user.Name,
